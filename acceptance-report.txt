@@ -1,0 +1,24 @@
+TRUSTFORGE ACCEPTANCE REPORT
+Generated: 2026-09-26
+
+VERIFIED (manual live API checks)
+- Backend packaged with Maven using Java 25.
+- Application started from the packaged JAR on a local port.
+- Organizer login returned an access token and ORGANIZER role.
+- Seeded dashboard returned TrustForge Demo Hackathon and six submissions.
+- Seeded normalization returned six project scores and judge statistics.
+- Audit verification returned true; the live seed chain contained 13 events before the additional verification/evaluation actions.
+- Judge login succeeded.
+- Judge access to organizer-only assignments returned HTTP 403.
+- Judge evaluation submission returned a server-calculated raw score.
+- Normalization rerun returned a new run identifier and six scores.
+- Refresh token rotation issued a replacement token; reuse of the old refresh token returned HTTP 401.
+- Certificate TF-2026-001 verified successfully.
+- `acceptance/smoke.ps1` completed with all ten checks marked VERIFIED against the live local API.
+- Frontend TypeScript/Vite production build completed successfully with `npm run build` (Vite runner config loader).
+
+NOT VERIFIED / BLOCKED BY ENVIRONMENT
+- `mvn test` could not complete in this Windows sandbox. JDK 25's ZipFileSystem raised AccessDeniedException while closing dependency JARs during test compilation. The focused tests remain in `backend/src/test/java`.
+- `docker compose up --build` could not be run because Docker is not installed in the environment.
+
+No unexecuted test is labelled PASS. The smoke suite in `acceptance/smoke.ps1` is the reproducible acceptance command for a normal local environment.

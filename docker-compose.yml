@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: trustforge
+      POSTGRES_USER: trustforge
+      POSTGRES_PASSWORD: trustforge
+    ports: ["5432:5432"]
+    volumes: ["trustforge-postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trustforge -d trustforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/trustforge
+      DB_USER: trustforge
+      DB_PASSWORD: trustforge
+      DB_DRIVER: org.postgresql.Driver
+      CORS_ORIGIN: http://localhost:5173
+      JWT_SECRET: local-compose-secret-change-before-production-please
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  frontend:
+    build: ./frontend
+    ports: ["5173:80"]
+    depends_on:
+      backend: {condition: service_healthy}
+volumes:
+  trustforge-postgres:
