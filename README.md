@@ -51,5 +51,8 @@ Compose runs PostgreSQL, Redis, the Spring Boot API, and the Nginx-served fronte
 5. Run normalization and inspect means, standard deviations, and score shifts.
 6. Review anomaly evidence, verify the audit chain, and inspect the result snapshot.
 7. Open the public gallery, vote once, and verify a certificate.
+ 
+DEMO VIDEO LINK [https://youtu.be/5m_-ux1B7Ys?si=RMFSR4ohThwkrdMi]
+
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [JUDGING.md](JUDGING.md), [THREAT-MODEL.md](THREAT-MODEL.md), and [DEMO.md](DEMO.md).
