@@ -1,0 +1,18 @@
+TRUSTFORGE ACCEPTANCE REPORT
+Generated: 2026-10-09
+
+PASS
+- Backend TypeScript production build: `npm run build`
+- Backend typecheck: `npm run typecheck`
+- Backend algorithm tests: `npm test` (3 tests passed)
+- Frontend TypeScript/Vite production build: `npm run build`
+- Docker Compose configuration validation: `docker compose config`
+- Live PostgreSQL-backed API smoke test: `acceptance/smoke.ps1` (12 checks verified)
+- Authenticated live submission stream: 10 persisted SSE events across six processing stages, ending at 100% with `READY` status and a stored content hash.
+- Live refresh-token rotation/reuse detection and judge evaluation validation.
+- Legacy event branding scan: no `Hackar` or `Raptors` matches remain in source or documentation.
+
+BLOCKED
+- `docker compose up --build` was not run in this acceptance pass because the local port 8080 was already occupied. Compose configuration was validated successfully, and the live API was verified against the installed PostgreSQL service with the database-only cache fallback.
+
+The smoke suite is the reproducible acceptance command for a normal local environment. The live submission stream was exercised separately against the local API because it creates a new persisted submission by design.
