@@ -1,18 +1,15 @@
 TRUSTFORGE ACCEPTANCE REPORT
-Generated: 2026-10-09
+Generated: 2026-10-20
 
-PASS
-- Backend TypeScript production build: `npm run build`
-- Backend typecheck: `npm run typecheck`
-- Backend algorithm tests: `npm test` (3 tests passed)
-- Frontend TypeScript/Vite production build: `npm run build`
-- Docker Compose configuration validation: `docker compose config`
-- Live PostgreSQL-backed API smoke test: `acceptance/smoke.ps1` (12 checks verified)
-- Authenticated live submission stream: 10 persisted SSE events across six processing stages, ending at 100% with `READY` status and a stored content hash.
-- Live refresh-token rotation/reuse detection and judge evaluation validation.
-- Legacy event branding scan: no `Hackar` or `Raptors` matches remain in source or documentation.
+VERIFIED
+- Backend: `mvn test` completed successfully (4 JUnit 5 tests; Mockito used for persistence/event collaborators).
+- Frontend: `npm run build` completed successfully (TypeScript check and Vite production build).
+- Compose configuration: `docker compose config --quiet` completed successfully.
+- Live Spring Boot API started against an isolated schema in the installed PostgreSQL service; Flyway applied both migrations and Hibernate validated the mapped schema.
+- Demo seed produced six projects, four judges, eighteen conflict-aware assignments, evaluation data, and a verifiable audit chain.
+- `acceptance/smoke.ps1` passed all 12 checks: public gallery, organizer login, refresh rotation and reuse detection, dashboard seed, assignment coverage, normalization, audit verification, results, certificate verification, judge login, role isolation, and judge evaluation write.
+- Additional live checks passed for assignment execution, normalization execution, result publication, voting, comments, pairwise output, search, notifications, participant registration, and `/auth/me`.
+- Judge workspace data was checked against actual assignment rows; the API accepted the React form's string-valued score inputs.
 
-BLOCKED
-- `docker compose up --build` was not run in this acceptance pass because the local port 8080 was already occupied. Compose configuration was validated successfully, and the live API was verified against the installed PostgreSQL service with the database-only cache fallback.
-
-The smoke suite is the reproducible acceptance command for a normal local environment. The live submission stream was exercised separately against the local API because it creates a new persisted submission by design.
+NOT RUN
+- The local Docker CLI could not connect to Docker Desktop's Linux engine (`docker info` reported a missing `dockerDesktopLinuxEngine` pipe). As a result, `docker compose up --build` and the MongoDB-backed end-to-end submission SSE flow could not be exercised here. The Compose configuration is valid, and the Mongo event persistence/fan-out has a passing Mockito-backed unit test.

@@ -1,5 +1,11 @@
-# Acceptance suite
+# Acceptance checks
 
-Run `./smoke.ps1 -BaseUrl http://localhost:8080` after starting the backend. The smoke suite checks the seeded gallery, login, dashboard data, assignment coverage, normalization output, audit chain, results, certificate verification, and backend judge role isolation. It reports `VERIFIED` only after the assertion executes successfully.
+With the full stack running from the project root, run:
 
-The repository also contains focused TypeScript/Vitest tests in `backend/src/core/algorithms.test.ts` for normalization edge cases, audit canonicalization, deterministic assignment, conflict handling, capacity behavior, and infeasible constraints.
+```powershell
+./acceptance/smoke.ps1 -BaseUrl http://localhost:8081
+```
+
+The script checks the seeded gallery, organizer and judge login, refresh-token rotation and reuse detection, dashboard records, assignment coverage, normalization, audit-chain verification, result snapshots, certificate verification, role isolation, and an evaluation write.
+
+The backend's JUnit 5 and Mockito tests run with `cd backend; mvn test`. The frontend production bundle builds with `cd frontend; npm ci; npm run build`.

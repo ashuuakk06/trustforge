@@ -1,33 +1,26 @@
-# TrustForge
+# TrustForge — Hackathon Judging Platform
 
-TrustForge is a self-hostable judging integrity layer for hackathons. It follows a project from versioned submission through conflict-aware assignment, rubric evaluation, cross-judge normalization, evidence-led anomaly review, cryptographic audit verification, and reproducible results.
+TrustForge is a full-stack platform for hackathon submissions, conflict-aware judge assignments, rubric scoring, score normalization, result publication, and tamper-evident audit history.
 
-## Run locally
+## Run the full application
 
-Requirements: Node 20+, npm, PostgreSQL 16+, and Redis 7+. The active runtime is a TypeScript Express modular monolith. PostgreSQL is the source of truth; Redis is optional for local development and used for short-lived dashboard caching.
-
-```powershell
-Copy-Item backend/.env.example backend/.env
-cd backend
-npm install
-npm run migrate
-npm run seed
-npm run dev
-```
-
-In a second terminal:
+Requirements: Docker Desktop with Docker Compose enabled.
 
 ```powershell
-cd frontend
-npm install --cache .npm-cache
-npm run dev
+docker compose up --build
 ```
 
-Open http://localhost:5173. The API is at http://localhost:8080 and its health endpoint is http://localhost:8080/health.
+On first startup, Compose builds the Spring Boot API and React app. Flyway creates the PostgreSQL schema, then the API loads demo accounts, submissions, assignments, evaluations, and results. Wait until the `backend` and `frontend` services are healthy.
+
+- Web app: http://localhost:5174
+- REST API: http://localhost:8081/api/v1
+- Health: http://localhost:8081/actuator/health
+
+Stop the app with `Ctrl+C`. To run it in the background, use `docker compose up --build -d`; view logs with `docker compose logs -f backend frontend`.
 
 ## Demo accounts
 
-All development accounts use `trustforge` as the password.
+All seeded accounts use `trustforge` as the password.
 
 | Account | Role |
 |---|---|
@@ -37,22 +30,50 @@ All development accounts use `trustforge` as the password.
 | judge2@trustforge.local | JUDGE |
 | participant1@trustforge.local | PARTICIPANT |
 
-## Docker
-
-```powershell
-docker compose up --build
-```
-
-Compose runs PostgreSQL, Redis, the TypeScript Express API, and the Nginx-served frontend. Change `JWT_SECRET` before deployment.
-
 ## Demo flow
 
-1. Login as organizer and inspect the Overview.
-2. Open submissions, create a project, and watch the live processing timeline update as the backend validates, hashes, persists, and audits it.
-3. Run deterministic assignment and inspect an explanation.
-4. Login as a judge and submit an evaluation.
-5. Run normalization and inspect means, standard deviations, and score shifts.
-6. Review anomaly evidence, verify the audit chain, and inspect the result snapshot.
-7. Open the public gallery, vote once, and verify a certificate.
+1. Sign in as `organizer@trustforge.local` and review the event dashboard.
+2. Run conflict-aware assignments and inspect each judge/project match.
+3. Sign in as `judge1@trustforge.local` and submit rubric scores for an assigned project.
+4. Re-run normalization to see per-judge z-score adjustments and anomaly evidence.
+5. Verify the audit hash chain, then publish the final results.
+6. Explore the public gallery, cast a one-account vote, and verify `TF-2026-001`.
+7. Sign in as `participant1@trustforge.local` to submit a project and follow its live processing timeline.
 
-See [ARCHITECTURE.md](ARCHITECTURE.md), [API.md](API.md), [SECURITY.md](SECURITY.md), [JUDGING.md](JUDGING.md), [THREAT-MODEL.md](THREAT-MODEL.md), and [DEMO.md](DEMO.md).
+## Run locally without Dockerizing the app
+
+Start only the stateful services from the project root:
+
+```powershell
+docker compose up -d postgres mongo redis
+```
+
+In one terminal, start the API:
+
+```powershell
+cd backend
+$env:DB_HOST='localhost'; $env:DB_PORT='5433'; $env:REDIS_PORT='6380'
+$env:MONGODB_URI='mongodb://localhost:27017/trustforge'
+mvn spring-boot:run
+```
+
+In another terminal, start the React app:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Open http://localhost:5173. Vite proxies `/api` requests to the local API on port 8080. Flyway and the demo-data initializer run automatically when the API starts.
+
+## Stack
+
+- **Backend:** Java 21, Spring Boot, Spring Security, Spring Data JPA, Hibernate, REST, JWT
+- **Frontend:** React, TypeScript, JavaScript, HTML, CSS, Vite
+- **Data:** PostgreSQL, Flyway, MongoDB, Redis
+- **Quality and delivery:** JUnit 5, Mockito, Maven, Git, GitHub, Docker, Docker Compose
+
+Relational workflow data is stored in PostgreSQL. Submission processing events are stored in MongoDB and streamed to React using Server-Sent Events. Redis briefly caches the dashboard and falls back to PostgreSQL when unavailable.
+
+See [API.md](API.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DATA-MODEL.md](DATA-MODEL.md), [DEMO.md](DEMO.md), and [DEPLOYMENT.md](DEPLOYMENT.md).

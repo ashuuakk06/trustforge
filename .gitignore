@@ -1,12 +1,35 @@
-backend/node_modules/
-backend/dist/
-backend/target/
-backend/.m2/
-backend/data/
-backend/.env
-frontend/node_modules/
-frontend/dist/
-frontend/.npm-cache/
+﻿# Environment files and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+target/
+**/target/
+
+# Local caches and data
+.m2/
+**/.m2/
+.npm-cache/
+**/.npm-cache/
+data/
+**/data/
+
+# Logs and generated files
 *.log
 *.tsbuildinfo
+
+# Local IDE and OS files
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db

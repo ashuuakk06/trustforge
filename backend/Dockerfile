@@ -1,19 +1,16 @@
-FROM node:22-alpine AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --no-audit --no-fund
-COPY tsconfig.json ./
-COPY migrations ./migrations
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+COPY pom.xml .
+RUN mvn -q -DskipTests dependency:go-offline
 COPY src ./src
-RUN npm run build
+RUN mvn -q -DskipTests package
 
-FROM node:22-alpine AS runtime
+FROM eclipse-temurin:21-jre-jammy AS runtime
 WORKDIR /app
-ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm ci --omit=dev --no-audit --no-fund
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/migrations ./migrations
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --uid 10001 appuser
+COPY --from=build /workspace/target/trustforge-api-1.0.0.jar /app/trustforge-api.jar
 EXPOSE 8080
-USER node
-CMD ["node", "dist/server.js"]
+USER 10001
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/trustforge-api.jar"]

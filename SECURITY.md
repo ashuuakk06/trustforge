@@ -1,5 +1,11 @@
 # Security notes
 
-Passwords are BCrypt-hashed. Access tokens are HMAC-SHA256 JWTs with short expiry; refresh tokens are stored server-side by SHA-256 token hash, consumed once, rotated within a family, and family-revoked when reuse is detected. The demo browser holds tokens in local storage for portability; production should prefer an httpOnly secure same-site refresh cookie and a short-lived in-memory access token.
+- Spring Security protects non-public API routes with signed JWT access tokens and role-based method authorization.
+- Passwords use BCrypt. Refresh tokens are random, stored as SHA-256 hashes, rotated on use, and revoked as a family if a used token is replayed.
+- Request bodies are validated on the API. Judges can only evaluate projects assigned to their judge profile.
+- A database uniqueness constraint enforces one community vote per account.
+- Audit events form a SHA-256 hash chain. The API exposes verification and does not make heuristic anomaly signals automatic sanctions.
+- CORS is restricted to the configured frontend origin. Compose development secrets are not suitable for deployment.
+- PostgreSQL and MongoDB store application data; Redis is a best-effort dashboard cache and is not required for correctness.
 
-Express middleware protects non-public routes. Organizer/admin operations use backend role guards, and judge evaluations are filtered to assignments. Zod validation, Helmet, CORS, request IDs, safe error text, authentication rate limits, health checks, and audit events are enabled. Never use the development secret outside a local demo.
+For deployment, replace the local credentials, set a long random `JWT_SECRET`, use TLS, and keep database, MongoDB, and Redis ports private.

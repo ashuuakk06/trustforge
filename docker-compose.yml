@@ -2,15 +2,27 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: trustforge
-      POSTGRES_USER: trustforge
-      POSTGRES_PASSWORD: trustforge
+      POSTGRES_DB: ${DB_NAME:-trustforge}
+      POSTGRES_USER: ${DB_USER:-trustforge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-trustforge}
     ports:
       - "5433:5432"
     volumes:
-      - "trustforge-postgres:/var/lib/postgresql/data"
+      - trustforge-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trustforge -d trustforge"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - trustforge-mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -28,23 +40,32 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgres://trustforge:trustforge@postgres:5432/trustforge
-      REDIS_URL: redis://redis:6379
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-trustforge}
+      DB_USER: ${DB_USER:-trustforge}
+      DB_PASSWORD: ${DB_PASSWORD:-trustforge}
+      MONGODB_URI: mongodb://mongo:27017/trustforge
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-local-compose-secret-change-before-production-please}
       CORS_ORIGIN: http://localhost:5174
-      JWT_SECRET: local-compose-secret-change-before-production-please
       SEED_DEMO: "true"
     ports:
       - "8081:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      mongo:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health | grep -q 'UP'"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q 'UP'"]
       interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 30
+      start_period: 45s
 
   frontend:
     build: ./frontend
@@ -56,3 +77,4 @@ services:
 
 volumes:
   trustforge-postgres:
+  trustforge-mongo:

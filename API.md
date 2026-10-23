@@ -1,19 +1,45 @@
-# API guide
+# REST API
 
-Base URL: `/api/v1`.
+Base path: `/api/v1`. Protected routes use `Authorization: Bearer <accessToken>`. Login and registration return a short-lived access token, a rotating refresh token, and a public user profile.
 
-Public: `GET /gallery`, `GET /certificates/verify?id=...`, `GET /public/certificates/{id}`.
+## Authentication
 
-Auth: `POST /auth/login`, `POST /auth/register`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/me`.
+- `POST /auth/login` — email and password
+- `POST /auth/register` — creates a participant account
+- `POST /auth/refresh` — rotates a refresh token; reuse revokes its token family
+- `POST /auth/logout` — revokes the supplied refresh token
+- `GET /auth/me` — current user
 
-Organizer/admin: `GET /dashboard`, `GET /judges`, `GET /assignments`, `POST /assignments/run`, `GET /anomalies`, `POST /anomalies/{id}/review`, `GET /audit`, `POST /audit/verify`, `POST /normalization/run`, `POST /results/publish`.
+## Event and submission
 
-Judge: `GET /evaluations`, `POST /evaluations`. The backend rejects unassigned projects and out-of-range scores.
+- `GET /events`, `GET /dashboard`
+- `GET /submissions?q=...`, `POST /submissions`
+- `GET /submissions/{id}`, `GET /submissions/{id}/events` (Server-Sent Events)
+- `GET /gallery?q=...`
 
-Authenticated flow: `GET /submissions`, `POST /submissions`, `GET /submissions/{id}`, `GET /submissions/{id}/events`, `GET /comments`, `POST /comments`, `POST /votes`, `GET /normalization`, `GET /results`, `GET /pairwise`, `GET /notifications`.
+Submission fields include name, track, description, problemStatement, solution, technology, team, repository, and demo. Processing validates the record, fingerprints its content, marks it ready for judging, and writes an audit event. MongoDB stores the ordered processing timeline.
 
-`POST /submissions` accepts the project details and returns `202 Accepted` with a submission ID. Processing continues in the background through validation, content hashing, persistence, audit chaining, and readiness for judging. `GET /submissions/{id}/events` is an authenticated Server-Sent Events stream; each event is persisted in PostgreSQL and includes the stage, status, progress, message, and timestamp so a client can reconnect and replay the current submission history.
+## Judging and integrity
 
-Errors use JSON with `error`, `message`, and `requestId`. Every response includes an `X-Request-ID` header. Authentication uses a short-lived JWT access token plus one-time rotating refresh tokens.
+- `GET /judges`, `GET /assignments`, `POST /assignments/run`
+- `GET /evaluations`, `POST /evaluations`
+- `GET /normalization`, `GET /normalization/proof`, `POST /normalization/run`
+- `GET /anomalies`, `POST /anomalies/{id}/review`
+- `GET /audit`, `POST /audit/verify`
+- `GET /pairwise`
 
-The API validates JSON bodies with Zod and returns `401` for missing/invalid authentication, `403` for role or assignment violations, `409` for duplicate votes, and `422` for invalid rubric scores.
+Assignments, anomaly review, audit, normalization, and publication require the organizer or admin role. Evaluation writes require a judge account assigned to the project.
+
+## Community and results
+
+- `GET /results`, `POST /results/publish`
+- `GET /votes`, `POST /votes`
+- `GET /comments?projectId=...`, `POST /comments`
+- `GET /notifications`
+- `GET /certificates/verify?id=...`, `POST /certificates/verify`
+- `GET /public/certificates/{id}`
+- `GET /search?q=...`
+
+The one-vote-per-account constraint is enforced by PostgreSQL. Published result snapshots include the calculation method, input hash, and ranked entries.
+
+Health endpoints: `/actuator/health` and `/api/v1/health/demo`.

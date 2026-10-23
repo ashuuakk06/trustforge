@@ -1,24 +1,35 @@
 # Architecture
 
-TrustForge is a modular monolith: one TypeScript Express process owns authorization, event lifecycle, judging calculations, and audit writes; one React/Vite application consumes versioned REST DTOs. This keeps transactions and reproducibility explicit without introducing operationally expensive microservices.
+TrustForge is a modular full-stack application. The React client calls a stateless Spring Boot REST API. PostgreSQL stores transactional event data; MongoDB stores the submission processing timeline; Redis is a short-lived cache for the dashboard.
+
+## Request path
+
+```text
+React + Vite → Nginx → Spring Boot REST API
+                           ├── Spring Security + JWT
+                           ├── Spring Data JPA / Hibernate → PostgreSQL
+                           ├── MongoRepository → MongoDB
+                           └── Redis → optional dashboard cache
+```
 
 ## Backend
 
-- `routes` contains thin HTTP controllers and Zod request schemas.
-- `services` contains transaction boundaries and business workflows.
-- `core` contains deterministic assignment, normalization, anomaly, and audit algorithms.
-- `db` and `migrations` contain PostgreSQL access and versioned SQL schema changes.
-- `auth` and `middleware` contain JWT, refresh rotation, role enforcement, rate limiting, request IDs, and safe errors.
-- `redis` provides a best-effort short-lived dashboard cache; correctness never depends on it.
+- `web` contains validated REST request/response handling and API errors.
+- `security` issues short-lived JWT access tokens, rotates hashed refresh tokens, and enforces roles.
+- `persistence` maps the core relational model with JPA entities and repositories. Flyway owns schema changes in `src/main/resources/db/migration`.
+- `core` contains deterministic conflict-aware assignment, z-score normalization, and stable hashing.
+- `platform` calculates dashboards, results, and cross-cutting workflows.
+- `submissions` persists project records in PostgreSQL, records processing stages in MongoDB, and streams them to the browser with Server-Sent Events.
+- `seed` creates the local demo event and accounts when the database is empty and `SEED_DEMO=true`.
 
-Compose starts PostgreSQL, Redis, the API, and Nginx. The API applies SQL migrations at startup and can seed safe demo accounts when `SEED_DEMO=true`. No Java, Maven, H2, or ORM runtime is required.
+Passwords are BCrypt hashes. Refresh tokens are stored as SHA-256 hashes, rotated on use, and revoked as a family when reuse is detected. Sensitive workflows append SHA-256 hash-chain events to PostgreSQL.
 
 ## Frontend
 
-React Router defines landing, auth, organizer, judge, gallery, and certificate routes. Shared primitives provide the visual language; pages call `frontend/src/lib/api.ts`, which attaches access tokens and performs one-time refresh rotation on a 401. Security decisions remain backend-enforced.
+The Vite and React application keeps the organizer, judge, participant, gallery, certificate, and results screens. `frontend/src/lib/api.ts` attaches the bearer token and rotates the refresh token after an expired access token. Security checks remain on the API.
 
-## Trust pipeline
+## Core workflow
 
-`SubmissionVersion → Assignment → Evaluation → NormalizationRun → Anomaly → AuditEvent → ResultSnapshot` is the core narrative. Audit hashes use `SHA-256(previousHash + canonicalPayload)` and verification recomputes the sequence from `GENESIS`.
+`Submission → Assignment → Evaluation → Normalization → Anomaly Review → Audit → Result Snapshot`
 
-The core workflow is persisted in PostgreSQL tables for users, refresh tokens, projects, judges, conflicts, assignments, evaluations, normalization runs, anomalies, votes, comments, audit events, result snapshots, and certificates. Transactions protect assignment replacement, evaluation writes, normalization runs, publication, and audit-chain append operations.
+The assignment engine excludes declared conflicts and respects judge capacity. Normalization keeps raw scores and computes a z-score signal using each judge's mean and sample standard deviation. A zero standard deviation uses a stable unit denominator. Anomaly signals are for human review and never automatically disqualify a judge.

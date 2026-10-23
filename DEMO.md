@@ -1,15 +1,14 @@
-# Demo script
+# Demo walkthrough
 
-1. Open the landing page and show the animated Trust Pipeline.
-2. Sign in as `organizer@trustforge.local` / `trustforge`.
-3. Open Overview and point out server-derived integrity signals.
-4. Open Submissions to show six versioned projects.
-5. Open Judging, inspect coverage, then run the assignment engine.
-6. In another session sign in as `judge1@trustforge.local`, open Judge workspace, and submit a rubric evaluation.
-7. Return to organizer, open Normalization, run it, and explain means, standard deviations, and z-scores.
-8. Open Integrity and discuss a potential anomaly as evidence, not an accusation.
-9. Open Audit explorer and run Verify audit chain.
-10. Open Results to show raw, normalized, community, and final signals.
-11. Open Public gallery and cast one vote; a second vote is rejected.
-12. Open Certificate verify and enter `TF-2026-001`.
-13. Open `http://localhost:8080/health` to show the live API health surface, then use `API.md` to walk through the REST endpoints.
+Start the project with `docker compose up --build`, then open http://localhost:5174.
+
+1. Sign in as `organizer@trustforge.local` with password `trustforge`.
+2. Review the seeded hackathon dashboard and audit timeline.
+3. Run assignments and confirm each project has eligible judges with no declared conflict.
+4. Open Normalization and rerun the z-score calculation.
+5. Review integrity signals, verify the audit chain, and publish results.
+6. Open the gallery, sign in as a participant, and cast a vote.
+7. Submit a project as a participant and watch its MongoDB-backed event stream complete.
+8. Verify certificate `TF-2026-001`.
+
+The demo event includes six projects, four judges, six participant accounts, assignments, scores, two community votes, and one certificate. Registration is available from the login page.

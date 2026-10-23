@@ -5,7 +5,7 @@ import { createSubmission, subscribeToSubmission, api } from '../lib/api'
 import { Badge, Button, Card, Empty, ErrorState, Loading, SectionTitle } from '../components/Primitives'
 import type { Project, SubmissionDraft, SubmissionEvent } from '../types'
 
-const initialDraft: SubmissionDraft = { name: '', track: 'Developer tools', description: '', problemStatement: '', solution: '', technology: 'React · TypeScript · Node.js', team: '', repository: 'https://github.com/', demo: 'https://', supportingLinks: [] }
+const initialDraft: SubmissionDraft = { name: '', track: 'Developer tools', description: '', problemStatement: '', solution: '', technology: 'Java · Spring Boot · React · PostgreSQL', team: '', repository: 'https://github.com/', demo: 'https://', supportingLinks: [] }
 
 export default function Submissions() {
   const [items, setItems] = useState<Project[]>([])
