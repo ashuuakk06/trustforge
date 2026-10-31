@@ -1,0 +1,12 @@
+TrustForge verification record
+Updated: 2026-10-31
+
+PASSED
+- Backend: `mvn test` — 6 tests, 0 failures, 0 errors, 0 skipped.
+- Frontend dependencies: `npm ci` — completed; npm reported 0 vulnerabilities.
+- Frontend production build: `npm run build` — TypeScript and Vite build completed successfully. Route splitting removed the oversized-chunk warning.
+- Docker Compose: `docker compose config --quiet` — configuration parsed successfully.
+
+NOT RUN
+- The Docker services and full application were not started, so there was no database-backed integration or end-to-end browser run.
+- No legacy MongoDB data dump was included with the project archive, so no historical MongoDB records were imported. New submission event records use PostgreSQL; the existing PostgreSQL migration already defines their table.

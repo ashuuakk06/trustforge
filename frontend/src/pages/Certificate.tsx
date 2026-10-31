@@ -1,0 +1,116 @@
+import { FormEvent, useState } from 'react'
+import { Badge, Button, Card, SectionTitle } from '../components/Primitives'
+import { Award, CheckCircle2, Fingerprint, Search, ShieldCheck } from 'lucide-react'
+import { api } from '../lib/api'
+export default function Certificate() {
+  const [id, setId] = useState('TF-2026-001')
+  const [result, setResult] = useState<any>()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      setResult(await api<any>(`/api/v1/certificates/verify?id=${encodeURIComponent(id)}`))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not verify')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="certificate-page">
+      <SectionTitle
+        eyebrow="PUBLIC VERIFICATION"
+        title="Certificate verification"
+        description="Look up a participant certificate in the local demo registry."
+      />
+      <Card className="certificate-search">
+        <form onSubmit={submit}>
+          <div className="search-field">
+            <Search size={18} />
+            <input
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+              aria-label="Certificate ID"
+              placeholder="Enter a certificate ID"
+            />
+          </div>
+          <Button type="submit">{busy ? 'Verifying…' : 'Verify certificate'}</Button>
+        </form>
+        <p className="muted tiny">Try the seeded record: TF-2026-001</p>
+      </Card>
+      {error && <div className="form-error">{error}</div>}
+      {result && (
+        <Card className={`certificate-result ${result.verified ? 'certificate-valid' : ''}`}>
+          <div className="certificate-seal">
+            {result.verified ? <CheckCircle2 size={40} /> : <Fingerprint size={40} />}
+          </div>
+          <div className="certificate-copy">
+            <Badge tone={result.verified ? 'green' : 'red'}>
+              {result.verified ? 'RECORD FOUND' : 'NO MATCH'}
+            </Badge>
+            <h2>{result.verified ? 'Record confirmed' : 'Record not found'}</h2>
+            <p className="muted">
+              {result.verified
+                ? 'This certificate ID matches a record in the local demo registry.'
+                : 'No matching certificate was found in the local verification registry.'}
+            </p>
+            {result.verified && (
+              <div className="certificate-fields">
+                <div>
+                  <span className="muted">Name</span>
+                  <strong>{result.name}</strong>
+                </div>
+                <div>
+                  <span className="muted">Event</span>
+                  <strong>{result.event}</strong>
+                </div>
+                <div>
+                  <span className="muted">Achievement</span>
+                  <strong>{result.achievement}</strong>
+                </div>
+                <div>
+                  <span className="muted">Issued</span>
+                  <strong>{result.issuedDate}</strong>
+                </div>
+                <div>
+                  <span className="muted">Certificate ID</span>
+                  <strong>{result.certificateId}</strong>
+                </div>
+                <div>
+                  <span className="muted">Registry record</span>
+                  <strong>{result.signature}</strong>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+      <div className="certificate-principles">
+        <div>
+          <ShieldCheck size={18} />
+          <span>
+            <strong>Local verification</strong>
+            <small>No cloud service required</small>
+          </span>
+        </div>
+        <div>
+          <Fingerprint size={18} />
+          <span>
+            <strong>Registry lookup</strong>
+            <small>Check the certificate ID</small>
+          </span>
+        </div>
+        <div>
+          <Award size={18} />
+          <span>
+            <strong>Publicly explainable</strong>
+            <small>Share the verification ID</small>
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
